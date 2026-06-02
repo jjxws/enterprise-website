@@ -107,14 +107,17 @@ async function saveProduct() {
 window.delProduct = async function(idx) {
   if (!confirm("确定删除？")) return;
   try {
-    const res = await fetch(`/api/products?idx=${idx}`, { method: 'DELETE' });
-    if (!res.ok) throw new Error("请求失败");
+    const res = await fetch("/api/products", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ del: 1, idx: idx })
+    });
+    if (!res.ok) throw new Error("删除失败");
     loadProducts();
   } catch (e) {
     alert("删除失败：" + e.message);
   }
 };
-
 // ================== 新闻（修复删除）==================
 async function saveNews() {
   const img = await toBase64(document.getElementById('n_img'));
@@ -133,8 +136,12 @@ async function saveNews() {
 window.delNews = async function(idx) {
   if (!confirm("确定删除？")) return;
   try {
-    const res = await fetch(`/api/news?idx=${idx}`, { method: 'DELETE' });
-    if (!res.ok) throw new Error("请求失败");
+    const res = await fetch("/api/news", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ del: 1, idx: idx })
+    });
+    if (!res.ok) throw new Error("删除失败");
     loadNews();
   } catch (e) {
     alert("删除失败：" + e.message);
