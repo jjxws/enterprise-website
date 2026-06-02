@@ -1,18 +1,15 @@
-// 替换你原来的 saveProduct / saveNews 函数
-
 async function saveProduct() {
   const btn = event.target;
-  btn.disabled = true; // 防重复点击
+  btn.disabled = true;
   try {
     let title = document.getElementById('prodTitle').value.trim();
     let content = document.getElementById('prodContent').value.trim();
     if (!title || !content) return alert('标题和内容不能为空');
-
     let res = await fetch('/api/products', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'ok' // 固定写死，避免 token 变量问题
+        'Authorization': 'ok'
       },
       body: JSON.stringify({ title, content })
     });
@@ -37,7 +34,6 @@ async function saveNews() {
     let date = document.getElementById('newsDate').value;
     let content = document.getElementById('newsContent').value.trim();
     if (!title || !date || !content) return alert('所有字段不能为空');
-
     let res = await fetch('/api/news', {
       method: 'POST',
       headers: {
