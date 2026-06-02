@@ -3,5 +3,5 @@ pages_build_output_dir = "."
 compatibility_date = "2026-06-02"
 
 [[kv_namespaces]]
-binding = "WEBSITE_KV"
+binding = "KV"
 id = "6c7d4217b8ae443092dc914714c1cc61"
