@@ -5,101 +5,165 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>后台管理</title>
 <style>
-*{box-sizing:border-box;font-family:Arial,sans-serif}
-body{margin:30px;background:#f5f5f5}
-.container{max-width:900px;margin:0 auto;background:#fff;padding:30px;border-radius:8px}
-input,textarea{width:100%;padding:12px;margin:5px 0;border:1px solid #ddd;border-radius:4px}
-textarea{min-height:120px}
-button{padding:12px 20px;background:#0066cc;color:white;border:none;border-radius:4px;cursor:pointer}
+*{box-sizing:border-box}
+body{font-family:Arial;margin:20px;background:#f5f5f5}
+.login{max-width:320px;margin:80px auto;background:white;padding:24px;border-radius:8px}
+.admin{display:none;max-width:900px;margin:auto;background:white;padding:24px;border-radius:8px}
+input,textarea,button{width:100%;padding:10px;margin:6px 0}
+button{background:#0066cc;color:white;border:none;border-radius:4px}
+.item{background:#f9f9f9;padding:12px;margin:10px 0;border-radius:6px}
+img{max-width:80px}
 .section{margin-top:30px;padding-top:20px;border-top:1px solid #eee}
-.item{padding:15px;background:#f9f9f9;margin:10px 0;border-radius:6px}
 </style>
 </head>
+
 <body>
 
-<div class="container">
-  <h1>企业网站后台</h1>
+<div class="login" id="loginBox">
+  <h3>登录</h3>
+  <input type="password" id="pwd" placeholder="密码：123456">
+  <button onclick="login()">登录</button>
+</div>
+
+<div class="admin" id="adminBox">
+  <h2>全站管理</h2>
 
   <div class="section">
-    <h2>产品管理</h2>
-    <input id="prodTitle" placeholder="产品标题">
-    <textarea id="prodContent" placeholder="产品介绍"></textarea>
-    <button onclick="saveProduct()">保存产品</button>
-    <div id="prodList"></div>
+    <h3>首页设置</h3>
+    <input id="h_title" placeholder="标题">
+    <textarea id="h_content" placeholder="介绍"></textarea>
+    <input type="file" id="h_img" accept="image/*"><br>
+    <button onclick="saveHome()">保存首页</button>
   </div>
 
   <div class="section">
-    <h2>新闻管理</h2>
-    <input type="date" id="newsDate">
-    <input id="newsTitle" placeholder="新闻标题">
-    <textarea id="newsContent" placeholder="新闻内容"></textarea>
-    <button onclick="saveNews()">保存新闻</button>
-    <div id="newsList"></div>
+    <h3>产品管理</h3>
+    <input id="p_title" placeholder="产品标题">
+    <textarea id="p_content" placeholder="介绍"></textarea>
+    <input type="file" id="p_img" accept="image/*"><br>
+    <button onclick="saveProduct()">添加产品</button>
+    <div id="p_list"></div>
+  </div>
+
+  <div class="section">
+    <h3>新闻管理</h3>
+    <input type="date" id="n_date">
+    <input id="n_title" placeholder="新闻标题">
+    <textarea id="n_content" placeholder="内容"></textarea>
+    <input type="file" id="n_img" accept="image/*"><br>
+    <button onclick="saveNews()">添加新闻</button>
+    <div id="n_list"></div>
   </div>
 </div>
 
 <script>
-async function loadProducts() {
-  let res = await fetch("/api/products")
-  let list = await res.json()
-  let html = ""
-  list.forEach(item => {
-    html += `<div class="item"><h3>${item.title}</h3><p>${item.content}</p></div>`
-  })
-  document.getElementById("prodList").innerHTML = html
+const PASSWORD = "qwer@1234";
+let isLogin = false;
+
+function login() {
+  if (document.getElementById('pwd').value === PASSWORD) {
+    document.getElementById('loginBox').style.display = "none";
+    document.getElementById('adminBox').style.display = "block";
+    loadAll();
+  } else alert("密码错误");
 }
 
+async function toBase64(fileInput) {
+  const file = fileInput.files[0];
+  if (!file) return "";
+  return new Promise(r => {
+    const fr = new FileReader();
+    fr.onload = () => r(fr.result);
+    fr.readAsDataURL(file);
+  });
+}
+
+// ================== 首页 ==================
+async function saveHome() {
+  const img = await toBase64(document.getElementById('h_img'));
+  const data = {
+    title: document.getElementById('h_title').value,
+    content: document.getElementById('h_content').value,
+    img: img
+  };
+  await fetch('/api/home', { method: 'POST', body: JSON.stringify(data) });
+  alert('保存成功');
+}
+
+// ================== 产品 ==================
 async function saveProduct() {
-  let title = document.getElementById("prodTitle").value.trim()
-  let content = document.getElementById("prodContent").value.trim()
-  if (!title || !content) return alert("请填写完整")
+  const img = await toBase64(document.getElementById('p_img'));
+  const data = {
+    title: document.getElementById('p_title').value,
+    content: document.getElementById('p_content').value,
+    img: img
+  };
+  await fetch('/api/products', { method: 'POST', body: JSON.stringify(data) });
+  alert('添加成功');
+  loadProducts();
+}
 
-  let res = await fetch("/api/products", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ title, content })
-  })
+async function delProduct(idx) {
+  await fetch(`/api/products?idx=${idx}`, { method: 'DELETE' });
+  loadProducts();
+}
 
-  if (res.ok) {
-    alert("保存成功！")
-    loadProducts()
-  } else {
-    alert("保存失败：" + res.status)
-  }
+// ================== 新闻 ==================
+async function saveNews() {
+  const img = await toBase64(document.getElementById('n_img'));
+  const data = {
+    date: document.getElementById('n_date').value,
+    title: document.getElementById('n_title').value,
+    content: document.getElementById('n_content').value,
+    img: img
+  };
+  await fetch('/api/news', { method: 'POST', body: JSON.stringify(data) });
+  alert('添加成功');
+  loadNews();
+}
+
+async function delNews(idx) {
+  await fetch(`/api/news?idx=${idx}`, { method: 'DELETE' });
+  loadNews();
+}
+
+// ================== 加载 ==================
+async function loadHome() {
+  const d = await (await fetch('/api/home')).json();
+  document.getElementById('h_title').value = d.title;
+  document.getElementById('h_content').value = d.content;
+}
+
+async function loadProducts() {
+  const list = await (await fetch('/api/products')).json();
+  p_list.innerHTML = list.map((i, idx) => `
+    <div class="item">
+      <h4>${i.title}</h4>
+      <p>${i.content}</p>
+      ${i.img ? `<img src="${i.img}">` : ''}
+      <button onclick="delProduct(${idx})">删除</button>
+    </div>
+  `).join('');
 }
 
 async function loadNews() {
-  let res = await fetch("/api/news")
-  let list = await res.json()
-  let html = ""
-  list.forEach(item => {
-    html += `<div class="item"><h3>${item.title}</h3><p>${item.date}</p><p>${item.content}</p></div>`
-  })
-  document.getElementById("newsList").innerHTML = html
+  const list = await (await fetch('/api/news')).json();
+  n_list.innerHTML = list.map((i, idx) => `
+    <div class="item">
+      <h4>${i.title}</h4>
+      <p>${i.date}</p>
+      <p>${i.content}</p>
+      ${i.img ? `<img src="${i.img}">` : ''}
+      <button onclick="delNews(${idx})">删除</button>
+    </div>
+  `).join('');
 }
 
-async function saveNews() {
-  let date = document.getElementById("newsDate").value
-  let title = document.getElementById("newsTitle").value.trim()
-  let content = document.getElementById("newsContent").value.trim()
-  if (!date || !title || !content) return alert("请填写完整")
-
-  let res = await fetch("/api/news", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ date, title, content })
-  })
-
-  if (res.ok) {
-    alert("保存成功！")
-    loadNews()
-  } else {
-    alert("保存失败：" + res.status)
-  }
+function loadAll() {
+  loadHome();
+  loadProducts();
+  loadNews();
 }
-
-loadProducts()
-loadNews()
 </script>
 
 </body>
