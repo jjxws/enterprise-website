@@ -21,7 +21,7 @@ img{max-width:80px}
 
 <div class="login" id="loginBox">
   <h3>登录</h3>
-  <input type="password" id="pwd" placeholder="密码：123456">
+  <input type="password" id="pwd" placeholder="密码：请输入密码">
   <button onclick="login()">登录</button>
 </div>
 
@@ -90,7 +90,7 @@ async function saveHome() {
   alert('保存成功');
 }
 
-// ================== 产品 ==================
+// ================== 产品（修复删除）==================
 async function saveProduct() {
   const img = await toBase64(document.getElementById('p_img'));
   const data = {
@@ -103,12 +103,19 @@ async function saveProduct() {
   loadProducts();
 }
 
-async function delProduct(idx) {
-  await fetch(`/api/products?idx=${idx}`, { method: 'DELETE' });
-  loadProducts();
-}
+// 改成全局函数，确保 onclick 能找到
+window.delProduct = async function(idx) {
+  if (!confirm("确定删除？")) return;
+  try {
+    const res = await fetch(`/api/products?idx=${idx}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error("请求失败");
+    loadProducts();
+  } catch (e) {
+    alert("删除失败：" + e.message);
+  }
+};
 
-// ================== 新闻 ==================
+// ================== 新闻（修复删除）==================
 async function saveNews() {
   const img = await toBase64(document.getElementById('n_img'));
   const data = {
@@ -122,10 +129,17 @@ async function saveNews() {
   loadNews();
 }
 
-async function delNews(idx) {
-  await fetch(`/api/news?idx=${idx}`, { method: 'DELETE' });
-  loadNews();
-}
+// 改成全局函数
+window.delNews = async function(idx) {
+  if (!confirm("确定删除？")) return;
+  try {
+    const res = await fetch(`/api/news?idx=${idx}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error("请求失败");
+    loadNews();
+  } catch (e) {
+    alert("删除失败：" + e.message);
+  }
+};
 
 // ================== 加载 ==================
 async function loadHome() {
@@ -165,6 +179,7 @@ function loadAll() {
   loadNews();
 }
 </script>
+
 
 </body>
 </html>
