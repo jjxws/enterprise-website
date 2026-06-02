@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>后台管理</title>
+<style>
+body{font-family:Arial;margin:20px;}
+.login-box{max-width:300px;margin:100px auto;}
+.admin{max-width:800px;margin:0 auto;display:none;}
+input,textarea,button{width:100%;margin:5px 0;padding:8px;box-sizing:border-box;}
+.item{border:1px solid #ddd;padding:10px;margin:10px 0;}
+</style>
+</head>
+<body>
+
+<div class="login-box" id="loginBox">
+  <h2>后台登录</h2>
+  <input type="password" id="pwd" placeholder="输入管理员密码">
+  <button onclick="login()">登录</button>
+</div>
+
+<div class="admin" id="admin">
+  <h2>产品管理</h2>
+  <input type="text" id="prodTitle" placeholder="产品名称">
+  <textarea id="prodContent" placeholder="产品描述"></textarea>
+  <button onclick="saveProduct()">保存产品</button>
+  <div id="prodList"></div>
+
+  <hr>
+
+  <h2>新闻管理</h2>
+  <input type="text" id="newsTitle" placeholder="新闻标题">
+  <input type="date" id="newsDate">
+  <textarea id="newsContent" placeholder="新闻内容"></textarea>
+  <button onclick="saveNews()">保存新闻</button>
+  <div id="newsList"></div>
+</div>
+
+<script>
+// 你自己改一个强密码
+const PASS="qwer@1234";
+let token="";
+
+function login(){
+  let pwd=document.getElementById('pwd').value;
+  if(pwd!==PASS)return alert('密码错误');
+  token="ok";
+  document.getElementById('loginBox').style.display='none';
+  document.getElementById('admin').style.display='block';
+  loadProducts();
+  loadNews();
+}
+
+// 产品
+async function saveProduct(){
+  let title=document.getElementById('prodTitle').value;
+  let content=document.getElementById('prodContent').value;
+  await fetch('/api/products',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':token},
+    body:JSON.stringify({title,content})
+  });
+  loadProducts();
+}
+async function loadProducts(){
+  let r=await fetch('/api/products');
+  let arr=await r.json();
+  document.getElementById('prodList').innerHTML=arr.map((p,i)=>`
+    <div class="item">
+      ${p.title}<br>${p.content}
+      <button onclick="delProduct(${i})">删除</button>
+    </div>
+  `).join('');
+}
+async function delProduct(i){
+  await fetch(`/api/products?idx=${i}`,{method:'DELETE',headers:{'Authorization':token}});
+  loadProducts();
+}
+
+// 新闻
+async function saveNews(){
+  let title=document.getElementById('newsTitle').value;
+  let date=document.getElementById('newsDate').value;
+  let content=document.getElementById('newsContent').value;
+  await fetch('/api/news',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':token},
+    body:JSON.stringify({title,date,content})
+  });
+  loadNews();
+}
+async function loadNews(){
+  let r=await fetch('/api/news');
+  let arr=await r.json();
+  document.getElementById('newsList').innerHTML=arr.map((n,i)=>`
+    <div class="item">
+      ${n.title} ${n.date}<br>${n.content}
+      <button onclick="delNews(${i})">删除</button>
+    </div>
+  `).join('');
+}
+async function delNews(i){
+  await fetch(`/api/news?idx=${i}`,{method:'DELETE',headers:{'Authorization':token}});
+  loadNews();
+}
+</script>
+
+</body>
+</html>
