@@ -1,197 +1,140 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>企业网站后台管理</title>
-    <style>
-        * {
-            box-sizing: border-box;
-            font-family: Arial, sans-serif;
-        }
-        body {
-            margin: 30px;
-            background: #f5f5f5;
-        }
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            background: white;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        h1, h2 {
-            color: #333;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        input, textarea {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-        textarea {
-            min-height: 120px;
-            resize: vertical;
-        }
-        button {
-            background: #0066cc;
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-        button:hover {
-            background: #0052aa;
-        }
-        .section {
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
-        }
-        .item {
-            padding: 15px;
-            background: #fafafa;
-            margin: 10px 0;
-            border-radius: 4px;
-        }
-        .item h4 {
-            margin: 0 0 5px 0;
-        }
-        .item p {
-            margin: 0;
-            color: #666;
-            font-size: 13px;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>企业网站后台管理</title>
+<style>
+*{box-sizing:border-box;font-family:Arial,sans-serif}
+body{margin:30px;background:#f5f5f5}
+.container{max-width:900px;margin:0 auto;background:#fff;padding:30px;border-radius:8px;box-shadow:0 2px 10px #00000017}
+.login-box{max-width:320px;margin:80px auto;background:#fff;padding:30px;border-radius:8px}
+.form-group{margin-bottom:15px}
+input,textarea{width:100%;padding:12px;border:1px solid #ddd;border-radius:4px;font-size:14px}
+textarea{min-height:120px;resize:vertical}
+button{background:#0066cc;color:#fff;border:none;padding:12px 20px;border-radius:4px;cursor:pointer;font-size:14px}
+button:hover{background:#0052aa}
+.section{margin-top:40px;padding-top:20px;border-top:1px solid #eee}
+.item{padding:15px;background:#fafafa;margin:10px 0;border-radius:4px}
+#adminBox{display:none}
+</style>
 </head>
 <body>
+<div class="login-box" id="loginBox">
+<h2>管理员登录</h2>
+<div class="form-group">
+<input type="password" id="pwd" placeholder="输入登录密码">
+</div>
+<button onclick="loginCheck()">登录后台</button>
+</div>
 
-<div class="container">
-    <h1>网站后台管理</h1>
-
-    <!-- 产品管理 -->
-    <div class="section">
-        <h2>产品管理</h2>
-        <div class="form-group">
-            <input type="text" id="prodTitle" placeholder="产品标题">
-        </div>
-        <div class="form-group">
-            <textarea id="prodContent" placeholder="产品介绍"></textarea>
-        </div>
-        <button onclick="saveProduct()">保存产品</button>
-        <div id="prodList" style="margin-top:20px;"></div>
-    </div>
-
-    <!-- 新闻管理 -->
-    <div class="section">
-        <h2>新闻管理</h2>
-        <div class="form-group">
-            <input type="date" id="newsDate">
-        </div>
-        <div class="form-group">
-            <input type="text" id="newsTitle" placeholder="新闻标题">
-        </div>
-        <div class="form-group">
-            <textarea id="newsContent" placeholder="新闻内容"></textarea>
-        </div>
-        <button onclick="saveNews()">保存新闻</button>
-        <div id="newsList" style="margin-top:20px;"></div>
-    </div>
+<div class="container" id="adminBox">
+<h1>网站后台管理</h1>
+<div class="section">
+<h2>产品管理</h2>
+<div class="form-group"><input id="prodTitle" placeholder="产品标题"></div>
+<div class="form-group"><textarea id="prodContent" placeholder="产品介绍"></textarea></div>
+<button onclick="saveProduct()">保存产品</button>
+<div id="prodList" style="margin-top:20px;"></div>
+</div>
+<div class="section">
+<h2>新闻管理</h2>
+<div class="form-group"><input type="date" id="newsDate"></div>
+<div class="form-group"><input id="newsTitle" placeholder="新闻标题"></div>
+<div class="form-group"><textarea id="newsContent" placeholder="新闻内容"></textarea></div>
+<button onclick="saveNews()">保存新闻</button>
+<div id="newsList" style="margin-top:20px;"></div>
+</div>
 </div>
 
 <script>
-// 加载产品列表
-async function loadProducts() {
-    const res = await fetch('/api/products');
-    const list = await res.json();
-    let html = '';
-    list.forEach(item => {
-        html += `
-        <div class="item">
-            <h4>${item.title}</h4>
-            <p>${item.content}</p>
-        </div>
-        `;
-    });
-    document.getElementById('prodList').innerHTML = html || '<p>暂无产品</p>';
+//后台密码，自行修改
+const ADMIN_PWD = "123456";
+const AUTH_KEY = "admin_ok";
+let isLogin = false;
+
+//登录校验
+function loginCheck(){
+  let p = document.getElementById("pwd").value;
+  if(p === ADMIN_PWD){
+    isLogin = true;
+    document.getElementById("loginBox").style.display = "none";
+    document.getElementById("adminBox").style.display = "block";
+    loadProducts();loadNews();
+  }else{
+    alert("密码错误");
+  }
 }
 
-// 保存产品
-async function saveProduct() {
-    const title = document.getElementById('prodTitle').value.trim();
-    const content = document.getElementById('prodContent').value.trim();
-    if (!title || !content) {
-        alert('请填写完整信息');
-        return;
-    }
-    const res = await fetch('/api/products', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, content })
-    });
-    if (res.ok) {
-        alert('保存成功');
-        document.getElementById('prodTitle').value = '';
-        document.getElementById('prodContent').value = '';
-        loadProducts();
-    } else {
-        alert('保存失败');
-    }
+//加载产品
+async function loadProducts(){
+  let res = await fetch("/api/products",{headers:{Authorization:AUTH_KEY}});
+  let arr = await res.json();
+  let html = "";
+  arr.forEach(item=>{
+    html += `<div class="item"><h4>${item.title}</h4><p>${item.content}</p></div>`
+  })
+  document.getElementById("prodList").innerHTML = html || "<p>暂无产品</p>";
 }
 
-// 加载新闻
-async function loadNews() {
-    const res = await fetch('/api/news');
-    const list = await res.json();
-    let html = '';
-    list.forEach(item => {
-        html += `
-        <div class="item">
-            <h4>${item.title}</h4>
-            <p>${item.date}</p>
-            <p>${item.content}</p>
-        </div>
-        `;
-    });
-    document.getElementById('newsList').innerHTML = html || '<p>暂无新闻</p>';
+//保存产品
+async function saveProduct(){
+  let title = document.getElementById("prodTitle").value.trim();
+  let content = document.getElementById("prodContent").value.trim();
+  if(!title||!content){alert("标题、内容不能为空");return}
+  let res = await fetch("/api/products",{
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json",
+      Authorization:AUTH_KEY
+    },
+    body:JSON.stringify({title,content})
+  })
+  if(res.ok){
+    alert("保存成功");
+    document.getElementById("prodTitle").value = "";
+    document.getElementById("prodContent").value = "";
+    loadProducts();
+  }else{
+    alert("保存失败：接口无权限或KV未绑定");
+  }
 }
 
-// 保存新闻
-async function saveNews() {
-    const date = document.getElementById('newsDate').value;
-    const title = document.getElementById('newsTitle').value.trim();
-    const content = document.getElementById('newsContent').value.trim();
-    if (!date || !title || !content) {
-        alert('请填写完整信息');
-        return;
-    }
-    const res = await fetch('/api/news', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ date, title, content })
-    });
-    if (res.ok) {
-        alert('保存成功');
-        document.getElementById('newsDate').value = '';
-        document.getElementById('newsTitle').value = '';
-        document.getElementById('newsContent').value = '';
-        loadNews();
-    } else {
-        alert('保存失败');
-    }
+//加载新闻
+async function loadNews(){
+  let res = await fetch("/api/news",{headers:{Authorization:AUTH_KEY}});
+  let arr = await res.json();
+  let html = "";
+  arr.forEach(item=>{
+    html += `<div class="item"><h4>${item.title}</h4><p>日期：${item.date}</p><p>${item.content}</p></div>`
+  })
+  document.getElementById("newsList").innerHTML = html || "<p>暂无新闻</p>";
 }
 
-// 页面加载时自动获取数据
-loadProducts();
-loadNews();
+//保存新闻
+async function saveNews(){
+  let date = document.getElementById("newsDate").value;
+  let title = document.getElementById("newsTitle").value.trim();
+  let content = document.getElementById("newsContent").value.trim();
+  if(!date||!title||!content){alert("全部字段必填");return}
+  let res = await fetch("/api/news",{
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json",
+      Authorization:AUTH_KEY
+    },
+    body:JSON.stringify({date,title,content})
+  })
+  if(res.ok){
+    alert("保存成功");
+    document.getElementById("newsDate").value = "";
+    document.getElementById("newsTitle").value = "";
+    document.getElementById("newsContent").value = "";
+    loadNews();
+  }else{
+    alert("保存失败：检查KV绑定");
+  }
+}
 </script>
-
 </body>
 </html>
